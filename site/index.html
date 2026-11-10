@@ -104,6 +104,13 @@
   .days.wide .day.sel{background:#fff;box-shadow:0 0 0 2px var(--ink) inset}
   .stripfoot{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px}
   .stripfoot .alertbox{margin-top:0}
+  .sunbox{display:flex;gap:14px;align-items:flex-start;background:#fff;border-radius:12px;padding:14px 16px;margin:12px auto 4px;max-width:720px;border-left:5px solid var(--sun)}
+  .sunbox.none{border-left-color:var(--fog-3)}
+  .sunbox .ico{font-size:26px;line-height:1}
+  .sunbox .t{font-size:17px;font-weight:650}
+  .sunbox .t .tt{font-variant-numeric:tabular-nums}
+  .sunbox .alt{font-size:13px;color:var(--ink-2);margin-top:4px}
+  .sunbox .ctl{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--ink-2)}
 </style>
 </head>
 <body>
@@ -129,6 +136,10 @@
       <div class="mapbox"><svg id="map" viewBox="0 0 600 390" width="100%"></svg></div>
       <div class="mapcap" id="mapcap"></div>
       <div class="maplegend" style="justify-content:center"><span>0 h</span><i></i><span id="maxh">9 h</span><span class="sub" style="margin-left:14px" id="mapnote"></span></div>
+      <div class="sunbox" id="sunbox"><div class="ico" id="sunico">☀︎</div><div style="flex:1">
+        <div class="t" id="suntitle"></div><div class="alt" id="sunalt"></div>
+        <div class="ctl"><label class="slider">Leave at <input type="range" id="dep" min="7" max="14" step="0.25" value="9.5"><b id="depv">09:30</b></label><span id="depnote"></span></div>
+      </div></div>
     </section>
 
     <section class="panel">
@@ -136,19 +147,8 @@
       <div class="days wide" id="days"></div>
       <div class="stripfoot">
         <div class="legend" style="margin:0">Grey = under 1 h of sun. 3+ grey days in a row = "sun drought" (banner).</div>
-        <div class="alertbox"><div style="font-size:18px">☀︎</div><div><div class="t" id="nexthome"></div><div class="sub" id="nearest"></div></div></div>
+        <div class="alertbox"><div style="font-size:18px">☀︎</div><div><div class="t" id="nexthome"></div></div></div>
       </div>
-    </section>
-
-    <section class="panel">
-      <h2 id="listtitle">Nearest sun · shortest trip first</h2>
-      <div class="controls">
-        <span class="sub">🚆 door to summit by public transport · max 2 h · day follows the map</span>
-        <label class="slider">Leave at <input type="range" id="dep" min="7" max="14" step="0.25" value="9.5"><b id="depv">09:30</b></label>
-        <span class="sub" id="depnote"></span>
-      </div>
-      <div class="list" id="list"></div>
-      <div class="note">Big number = door-to-summit travel time (hand-entered for now); order = shortest first, ties → fewer changes. Sunny = ≥ 1 h of sun after arrival and before the last ride down. ⛔ = lift closed.</div>
     </section>
 
     <section class="panel">
@@ -158,7 +158,7 @@
     </section>
   </div>
 
-  <footer id="footer">Source: MeteoSwiss (OGD local forecast sre000h0, ICON-CH1-EPS DURSUN). Travel times: hand-entered, OJP 2.0 later.</footer>
+  <footer id="footer">Source: MeteoSwiss (OGD local forecast sre000h0, ICON-CH1/CH2 DURSUN, SwissMetNet). Spots curated from 14 winters of station data (docs/winter-sun-spots.md). Train times: one transport.opendata.ch sample, OJP 2.0 later.</footer>
 </div>
 
 <script>
@@ -249,25 +249,26 @@ function render(){
   document.getElementById("depv").textContent=fmt(depH);
   document.getElementById("depnote").textContent = sel===0 && nowH>dep ? "leaving now (slider is in the past)" : "";
   const all=DATA.spots.map(s=>({s,...eff(s,d,depH)})).sort((a,b)=>a.s.travel_min-b.s.travel_min||a.s.changes-b.s.changes);
-  const near=all.filter(r=>r.s.travel_min<=120), far=all.filter(r=>r.s.travel_min>120&&r.e>=1).sort((a,b)=>b.e-a.e);
-  const sunny=near.filter(r=>r.e>=1), grey=near.filter(r=>r.e<1);
+  const sunny=all.filter(r=>r.e>=1);
   const label = sel===0?"today":sel===1?"tomorrow":"on "+longDay(d);
-  const n0=sunny[0]; document.getElementById("nearest").textContent = n0 ? `Can't wait? Nearest sun ${label}: ${n0.s.name}, ${dur(n0.s.travel_min)} by train, ☀ ${n0.e.toFixed(1)} h for you.` : `No sun within 2 h ${label}.`;
-  document.getElementById("list").innerHTML=[...sunny,...grey].map((r,i)=>{
-    const s=r.s, t=s.travel_min, tot=total(r.h);
-    const bars=r.h.slice(8,18).map((f,k)=>{const hr=8+k, cls=f>.8?"s3":f>.4?"s2":f>.05?"s1":"";
-      const gone=hr+1<=r.arr?" gone":"", arr=(r.arr>=hr&&r.arr<hr+1)?" arr":""; return `<i class="${cls}${gone}${arr}" title="${hr}:00 · ${Math.round(f*60)} min"></i>`}).join("");
-    const head=i===sunny.length&&grey.length?`<div class="grouphead">No sun for you ${label} · within 2 h</div>`:"";
-    return head+`<div class="row ${i===0&&r.e>=1?"top":""} ${r.e<1?"dim":""}">
-      <div class="rank">${r.e>=1?i+1:"–"}</div>
-      <div><div class="name">${s.name}${s.closed?'<span class="tag closed">⛔ '+s.closed+'</span>':""}</div>
-        <div class="sub">${s.alt} m · ${s.region} · ${dur(t)} → arrive ${fmt(r.arr)}${s.last_down?" · last down "+s.last_down:""} · forecast ${tot.toFixed(1)} h total</div>
-        <div class="sub ride">${s.changes===0?'<b>direct</b>':'⇄ '+s.changes+' change'+(s.changes>1?'s':'')} · 💻 longest stretch ${s.seat_min} min</div></div>
-      <div class="hours">${bars}</div>
-      <div class="eff"><div class="n ${r.e<1?"zero":""}">${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}</div><div class="sub">☀ ${r.e.toFixed(1)} h for you</div></div>
-    </div>`;}).join("") + (far.length?`<details class="far"><summary>Beyond 2 h · ${far.length} sunny · best: ${far[0].s.name} ${far[0].e.toFixed(1)} h (${dur(far[0].s.travel_min)})</summary><div class="sub" style="padding:6px 0 0 4px">${far.map(r=>`${r.s.name} — ${r.e.toFixed(1)} h, ${dur(r.s.travel_min)}`).join(" · ")}</div></details>`:"");
-  document.getElementById("listtitle").textContent=`Nearest sun ${label} · shortest trip first`;
-  dayNav(); dayStrip(); profile(d,label); renderMap(all,d,label);
+  const ride = s => s.changes===0?"direct":`${s.changes} change${s.changes>1?"s":""}`;
+  const window_ = r => {const hrs=r.h.map((f,i)=>f>0.15&&i+1>r.arr?i:-1).filter(i=>i>=0); return hrs.length?`${fmt(Math.max(hrs[0],r.arr))}–${fmt(hrs[hrs.length-1]+1)}`:"";};
+  const box=document.getElementById("sunbox"), n0=sunny[0];
+  box.classList.toggle("none", !n0);
+  document.getElementById("sunico").textContent = n0 ? "☀︎" : "☁︎";
+  if(n0){
+    document.getElementById("suntitle").innerHTML=`Nearest sun ${label}: ${n0.s.name} <span class="tt">· ${dur(n0.s.travel_min)}</span>`;
+    const rest=sunny.slice(1,3).map(r=>`${r.s.name} ${dur(r.s.travel_min)} (☀ ${r.e.toFixed(1)} h)`).join(" · ");
+    const homeSun=total(DATA.home.d[d]);
+    document.getElementById("sunalt").innerHTML=`${homeSun>=1?`<b>Sun at home too</b> (Winterthur ${homeSun.toFixed(1)} h) · `:""}${ride(n0.s)} · arrive ${fmt(n0.arr)} · <b>☀ ${n0.e.toFixed(1)} h for you</b> (${window_(n0)}) · ${n0.s.region}${rest?`<br>Next: ${rest}`:""}`;
+  } else {
+    const best=[...all].sort((a,b)=>total(b.h)-total(a.h))[0];
+    document.getElementById("suntitle").textContent=`No sun at the ${all.length} spots ${label}`;
+    document.getElementById("sunalt").innerHTML= total(best.h)>0.5 && best.e<1
+      ? `${best.s.name} gets ${total(best.h).toFixed(1)} h, but not after you'd arrive. Try leaving earlier.`
+      : `Best of them: ${best.s.name}, ${total(best.h).toFixed(1)} h all day.`;
+  }
+  dayNav(); dayStrip(); profile(d,label); renderMap(all,d,label,n0);
 }
 
 function profile(d,label){
@@ -287,7 +288,7 @@ function profile(d,label){
   svg.innerHTML=g;
 }
 
-function renderMap(rows,d,label){
+function renderMap(rows,d,label,n0){
   document.getElementById("maptitle").textContent=`Map · forecast sunshine`; const H0=DATA.home;
   const svg=document.getElementById("map");
   const path=`M${CH.map(p=>px(p[0]).toFixed(1)+","+py(p[1]).toFixed(1)).join("L")}Z`;
@@ -297,16 +298,17 @@ function renderMap(rows,d,label){
     img=`<image href="data/${m.png}" x="${px(x0)}" y="${py(y1)}" width="${px(x1)-px(x0)}" height="${py(y0)-py(y1)}" preserveAspectRatio="none" clip-path="url(#chclip)"/>`;}
   document.getElementById("maxh").textContent=(MAPS?MAPS.full_yellow_h:9)+" h";
   document.getElementById("mapnote").textContent = m
-    ? `transparent = no sun · full yellow = ${MAPS.full_yellow_h} h · ${m.model} (${m.res_km} km), runs ${m.runs_used.join(", ")} · dashed ring ≈ 2 h by train (schematic)`
+    ? `transparent = no sun · full yellow = ${MAPS.full_yellow_h} h · ${m.model} (${m.res_km} km), runs ${m.runs_used.join(", ")}`
     : `no sunshine map this far ahead (models reach 5 days) · dots = spot forecast (yellow ≥ 1 h, gold ≥ 4 h)`;
   const sunnyN=rows.filter(r=>total(r.h)>=1).length;
   document.getElementById("mapcap").innerHTML=`<b>${longDay(d)}</b> · ${sunnyN} of ${rows.length} spots with ≥ 1 h sun · Winterthur ${total(H0.d[d]).toFixed(1)} h`;
   let g=`<defs><clipPath id="chclip"><path d="${path}"/></clipPath></defs><path d="${path}" fill="#dfe3e6"/>${img}<path d="${path}" fill="none" stroke="#7d868f" stroke-width="1.2"/>`;
-  const H=DATA.home, r2=2*55*K/111;
-  g+=`<circle cx="${px(H.lon)}" cy="${py(H.lat)}" r="${r2}" fill="none" stroke="#2b3036" stroke-dasharray="3 5" opacity=".45"/>`;
+  const H=DATA.home;
   rows.forEach(r=>{const s=r.s, v=total(r.h), fill=v>=4?"#f4b400":v>=1?"#ffd75e":"#fff";
-    g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="${m?3.5:5}" fill="${fill}" stroke="#2b3036" stroke-width="1.2"/>
-      <text x="${px(s.lon)+6}" y="${py(s.lat)+(s.name==="Hoher Kasten"?-6:s.name==="Säntis"?12:4)}" font-size="10.5" fill="#2b3036" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".7">${s.name.replace(" Kulm","")}</text>`});
+    const top=n0&&n0.s===s, dy=s.name==="Bad Ragaz"?-6:s.name==="Chur"?13:5;
+    if(top) g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="11" fill="none" stroke="#2b3036" stroke-width="2"/>`;
+    g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="6" fill="${fill}" stroke="#2b3036" stroke-width="1.4"/>
+      <text x="${px(s.lon)+(top?14:10)}" y="${py(s.lat)+dy}" font-size="12" ${top?'font-weight="700"':''} fill="#2b3036" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".8">${s.name.replace(" Kulm","")} <tspan fill="#5c656e" font-weight="400">${Math.floor(s.travel_min/60)}:${String(s.travel_min%60).padStart(2,"0")}</tspan></text>`});
   const hv=total(H.d[d]);
   g+=`<circle cx="${px(H.lon)}" cy="${py(H.lat)}" r="6" fill="#2b3036"/><text x="${px(H.lon)+9}" y="${py(H.lat)-7}" font-size="12" font-weight="600" fill="#2b3036" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".7">Winterthur ${hv>=1?"☀︎":"☁︎"}</text>`;
   svg.innerHTML=g;
