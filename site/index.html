@@ -81,6 +81,29 @@
   .alertbox .t{font-weight:620}
   footer{margin-top:22px;font-size:12px;color:var(--ink-2)}
   @media (max-width:860px){.grid{grid-template-columns:1fr}.row{grid-template-columns:24px 1fr 80px}.row .hours{display:none}}
+
+  /* layout v2: map first, day switcher, wide strip */
+  .hero.sunny{background:linear-gradient(120deg,#f4b400,#ffd75e);color:var(--ink)}
+  .hero.sunny .meta{opacity:.85}
+  .mockbadge.v2{background:#fff3c4;border-color:#f4b400}
+  .stack{display:flex;flex-direction:column;gap:18px;margin-top:18px}
+  .mappanel .mapbox{max-width:720px;margin:0 auto}
+  .daynav{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;margin:2px 0 10px}
+  .daynav .arrow{border:1px solid var(--fog-2);background:#fff;border-radius:99px;width:32px;height:32px;font-size:16px;cursor:pointer;color:var(--ink)}
+  .daynav .arrow:disabled{opacity:.35;cursor:default}
+  .daynav .chip{border:1px solid var(--fog-2);background:#fff;border-radius:10px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-2);line-height:1.25;text-align:center}
+  .daynav .chip b{display:block;font-size:13px;color:var(--ink)}
+  .daynav .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .daynav .chip.on b{color:#fff}
+  .daynav .chip .q{font-size:10.5px;opacity:.8}
+  .mapcap{text-align:center;font-size:13px;color:var(--ink-2);margin-top:-2px}
+  .mapcap b{color:var(--ink)}
+  .days.wide{height:92px;gap:10px;margin-top:26px}   /* room for the value label on the tallest bar */
+  .days.wide .bar{max-width:none;border-radius:6px 6px 3px 3px}
+  .days.wide .day{cursor:pointer;border-radius:8px;padding:0 4px 2px}
+  .days.wide .day.sel{background:#fff;box-shadow:0 0 0 2px var(--ink) inset}
+  .stripfoot{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .stripfoot .alertbox{margin-top:0}
 </style>
 </head>
 <body>
@@ -99,40 +122,39 @@
     </div>
   </section>
 
-  <div class="grid">
+  <div class="stack">
+    <section class="panel mappanel">
+      <h2 id="maptitle">Map · forecast sunshine</h2>
+      <div class="daynav" id="daynav"></div>
+      <div class="mapbox"><svg id="map" viewBox="0 0 600 390" width="100%"></svg></div>
+      <div class="mapcap" id="mapcap"></div>
+      <div class="maplegend" style="justify-content:center"><span>0 h</span><i></i><span id="maxh">9 h</span><span class="sub" style="margin-left:14px" id="mapnote"></span></div>
+    </section>
+
     <section class="panel">
-      <h2>Winterthur · sunshine hours, next 9 days</h2>
-      <div class="days" id="days"></div>
-      <div class="legend">Grey = under 1 h of sun. 3+ grey days in a row = "sun drought", shown in the banner above (no notification, by design).</div>
-      <div class="alertbox">
-        <div style="font-size:22px">☀︎</div>
-        <div><div class="t" id="nexthome"></div>
-        <div class="sub" id="nearest"></div></div>
+      <h2>Winterthur · sunshine hours, next 9 days <span class="sub" style="text-transform:none;letter-spacing:0;font-weight:400">· click a day to show it on the map</span></h2>
+      <div class="days wide" id="days"></div>
+      <div class="stripfoot">
+        <div class="legend" style="margin:0">Grey = under 1 h of sun. 3+ grey days in a row = "sun drought" (banner).</div>
+        <div class="alertbox"><div style="font-size:18px">☀︎</div><div><div class="t" id="nexthome"></div><div class="sub" id="nearest"></div></div></div>
       </div>
     </section>
 
     <section class="panel">
-      <h2 id="proftitle">Altitude vs. sun</h2>
-      <svg id="profile" viewBox="0 0 520 304" width="100%"></svg>
-      <div class="note">Forecast sunshine per spot for the selected day. Fog top isn't inferred yet.</div>
-    </section>
-
-    <section class="panel full">
-      <h2>Nearest sun · shortest trip first</h2>
+      <h2 id="listtitle">Nearest sun · shortest trip first</h2>
       <div class="controls">
-        <div class="seg" id="day"></div>
-        <span class="sub">🚆 door to summit by public transport · max 2 h</span>
+        <span class="sub">🚆 door to summit by public transport · max 2 h · day follows the map</span>
         <label class="slider">Leave at <input type="range" id="dep" min="7" max="14" step="0.25" value="9.5"><b id="depv">09:30</b></label>
         <span class="sub" id="depnote"></span>
       </div>
       <div class="list" id="list"></div>
-      <div class="note">Big number = door-to-summit travel time (entered by hand for now); order = shortest first, ties → fewer changes. Listed as sunny if ≥ 1 h of sun is left after you arrive and before the last ride down. Bar = hourly sun 08–17 h; dark tick = arrival, faded = before you get there. ⛔ = lift closed, counts as 0 h.</div>
+      <div class="note">Big number = door-to-summit travel time (hand-entered for now); order = shortest first, ties → fewer changes. Sunny = ≥ 1 h of sun after arrival and before the last ride down. ⛔ = lift closed.</div>
     </section>
 
-    <section class="panel full">
-      <h2 id="maptitle">Map · forecast sunshine</h2>
-      <svg id="map" viewBox="0 0 600 390" width="100%"></svg>
-      <div class="maplegend"><span>0 h</span><i></i><span id="maxh">9 h</span><span class="sub" style="margin-left:14px" id="mapnote"></span></div>
+    <section class="panel">
+      <h2 id="proftitle">Altitude vs. sun</h2>
+      <div style="max-width:720px;margin:0 auto"><svg id="profile" viewBox="0 0 520 304" width="100%"></svg></div>
+      <div class="note">Forecast sunshine per spot for the selected day. Fog top isn't inferred yet.</div>
     </section>
   </div>
 
@@ -169,10 +191,8 @@ async function main(){
   days9=Object.keys(DATA.home.d).filter(d=>d>=nowL.date).slice(0,9);
   const run=parseStamp(DATA.run_utc);
   document.getElementById("badge").textContent=`Live data · MeteoSwiss run ${run.toLocaleString("en-GB",{timeZone:TZ,weekday:"short",hour:"2-digit",minute:"2-digit"})}`;
-  hero(); dayStrip();
-  const seg=document.getElementById("day");
-  seg.innerHTML=days9.slice(0,3).map((d,i)=>`<button data-i="${i}" class="${i===0?"on":""}">${i===0?"Today":i===1?"Tomorrow":dayName(d)}</button>`).join("");
-  seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{seg.querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");sel=+b.dataset.i;render();});
+  hero();
+  document.addEventListener("keydown",e=>{if(e.key==="ArrowLeft")select(sel-1);if(e.key==="ArrowRight")select(sel+1);});
   document.getElementById("dep").oninput=e=>{dep=+e.target.value;render()};
   render();
 }
@@ -187,6 +207,7 @@ function hero(){
   if(streak>=3){ t.textContent=`No real sun in Winterthur for the next ${streak===tot.length?streak+"+":streak} days`;
     p.innerHTML= first>=0?`First sunny day forecast: <b>${longDay(days9[first])}</b> (≈ ${ahead[first].toFixed(1)} h).`:"No day with ≥ 1 h sun in the forecast."; }
   else { document.getElementById("heroicon").textContent=tot[0]>=1?"☀︎":"⛅︎";
+    document.querySelector(".hero").classList.toggle("sunny", tot[0]>=1);
     t.textContent= tot[0]>=1?`Sun in Winterthur today: ≈ ${tot[0].toFixed(1)} h`:`Little sun today, but no sun drought ahead`;
     p.innerHTML= first>=0?`Next sun: <b>${first===0?"later today":longDay(days9[first])}</b> (≈ ${ahead[first].toFixed(1)} h).`:""; }
   document.getElementById("herometa").innerHTML=`<span>Sun next 9 days: <b>${tot.reduce((a,b)=>a+b,0).toFixed(1)} h</b></span><span>Source: MeteoSwiss local forecast, ZIP 8400</span><span>Last day with ≥ 2 h sun: not built yet (needs station history)</span>`;
@@ -196,10 +217,21 @@ function hero(){
   n.textContent=`Next sun at home: ${longDay(days9[first])}, ~${fmt(hrs[0])}–${fmt(hrs[hrs.length-1]+1)} (≈ ${ahead[first].toFixed(1)} h)`;
 }
 
+function quality(d){const m=MAPS&&MAPS.maps.find(x=>x.date===d); return m?`${m.res_km} km map`:"no map";}
+function select(i){ if(i<0||i>=days9.length) return; sel=i; render(); }
+function dayNav(){
+  const el=document.getElementById("daynav");
+  el.innerHTML=`<button class="arrow" id="prev" ${sel===0?"disabled":""}>‹</button>`+
+    days9.map((d,i)=>{const v=total(DATA.home.d[d]);return `<button class="chip ${i===sel?"on":""}" data-i="${i}"><b>${i===0?"Today":i===1?"Tomorrow":dayName(d)}</b>${longDay(d).split(" ").slice(1).join(" ")}<div class="q">${quality(d)}</div></button>`}).join("")+
+    `<button class="arrow" id="next" ${sel===days9.length-1?"disabled":""}>›</button>`;
+  el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>select(+b.dataset.i));
+  el.querySelector("#prev").onclick=()=>select(sel-1); el.querySelector("#next").onclick=()=>select(sel+1);
+}
 function dayStrip(){
   const el=document.getElementById("days"); el.innerHTML="";
   days9.forEach((d,i)=>{const v=total(DATA.home.d[d]);
-    el.insertAdjacentHTML("beforeend",`<div class="day${i===0?" today":""}"><div class="bar ${v>=1?"sun":""}" style="height:${Math.max(3,Math.min(v,9)/9*100)}%"><span class="v">${v.toFixed(1)}</span></div><div class="lbl">${i===0?"Today":dayName(d)}</div></div>`);});
+    el.insertAdjacentHTML("beforeend",`<div class="day${i===0?" today":""}${i===sel?" sel":""}" data-i="${i}"><div class="bar ${v>=1?"sun":""}" style="height:${Math.max(3,Math.min(v,9)/9*100)}%"><span class="v">${v.toFixed(1)}</span></div><div class="lbl">${i===0?"Today":dayName(d)}</div></div>`);});
+  el.querySelectorAll(".day").forEach(x=>x.onclick=()=>select(+x.dataset.i));
 }
 
 function eff(s,d,depH){
@@ -219,7 +251,7 @@ function render(){
   const all=DATA.spots.map(s=>({s,...eff(s,d,depH)})).sort((a,b)=>a.s.travel_min-b.s.travel_min||a.s.changes-b.s.changes);
   const near=all.filter(r=>r.s.travel_min<=120), far=all.filter(r=>r.s.travel_min>120&&r.e>=1).sort((a,b)=>b.e-a.e);
   const sunny=near.filter(r=>r.e>=1), grey=near.filter(r=>r.e<1);
-  const label = sel===0?"today":sel===1?"tomorrow":dayName(d);
+  const label = sel===0?"today":sel===1?"tomorrow":"on "+longDay(d);
   const n0=sunny[0]; document.getElementById("nearest").textContent = n0 ? `Can't wait? Nearest sun ${label}: ${n0.s.name}, ${dur(n0.s.travel_min)} by train, ☀ ${n0.e.toFixed(1)} h for you.` : `No sun within 2 h ${label}.`;
   document.getElementById("list").innerHTML=[...sunny,...grey].map((r,i)=>{
     const s=r.s, t=s.travel_min, tot=total(r.h);
@@ -234,7 +266,8 @@ function render(){
       <div class="hours">${bars}</div>
       <div class="eff"><div class="n ${r.e<1?"zero":""}">${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}</div><div class="sub">☀ ${r.e.toFixed(1)} h for you</div></div>
     </div>`;}).join("") + (far.length?`<details class="far"><summary>Beyond 2 h · ${far.length} sunny · best: ${far[0].s.name} ${far[0].e.toFixed(1)} h (${dur(far[0].s.travel_min)})</summary><div class="sub" style="padding:6px 0 0 4px">${far.map(r=>`${r.s.name} — ${r.e.toFixed(1)} h, ${dur(r.s.travel_min)}`).join(" · ")}</div></details>`:"");
-  profile(d,label); renderMap(all,d,label);
+  document.getElementById("listtitle").textContent=`Nearest sun ${label} · shortest trip first`;
+  dayNav(); dayStrip(); profile(d,label); renderMap(all,d,label);
 }
 
 function profile(d,label){
@@ -255,7 +288,7 @@ function profile(d,label){
 }
 
 function renderMap(rows,d,label){
-  document.getElementById("maptitle").textContent=`Map · forecast sunshine ${label}`;
+  document.getElementById("maptitle").textContent=`Map · forecast sunshine`; const H0=DATA.home;
   const svg=document.getElementById("map");
   const path=`M${CH.map(p=>px(p[0]).toFixed(1)+","+py(p[1]).toFixed(1)).join("L")}Z`;
   const m=MAPS&&MAPS.maps.find(x=>x.date===d);
@@ -265,12 +298,14 @@ function renderMap(rows,d,label){
   document.getElementById("maxh").textContent=(MAPS?MAPS.full_yellow_h:9)+" h";
   document.getElementById("mapnote").textContent = m
     ? `transparent = no sun · full yellow = ${MAPS.full_yellow_h} h · ${m.model} (${m.res_km} km), runs ${m.runs_used.join(", ")} · dashed ring ≈ 2 h by train (schematic)`
-    : `no sunshine map this far ahead (models reach 5 days)`;
+    : `no sunshine map this far ahead (models reach 5 days) · dots = spot forecast (yellow ≥ 1 h, gold ≥ 4 h)`;
+  const sunnyN=rows.filter(r=>total(r.h)>=1).length;
+  document.getElementById("mapcap").innerHTML=`<b>${longDay(d)}</b> · ${sunnyN} of ${rows.length} spots with ≥ 1 h sun · Winterthur ${total(H0.d[d]).toFixed(1)} h`;
   let g=`<defs><clipPath id="chclip"><path d="${path}"/></clipPath></defs><path d="${path}" fill="#dfe3e6"/>${img}<path d="${path}" fill="none" stroke="#7d868f" stroke-width="1.2"/>`;
   const H=DATA.home, r2=2*55*K/111;
   g+=`<circle cx="${px(H.lon)}" cy="${py(H.lat)}" r="${r2}" fill="none" stroke="#2b3036" stroke-dasharray="3 5" opacity=".45"/>`;
-  rows.forEach(r=>{const s=r.s, ok=r.e>=1&&s.travel_min<=120;
-    g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="3.5" fill="${ok?"#2b3036":"#fff"}" stroke="#2b3036" stroke-width="1.2"/>
+  rows.forEach(r=>{const s=r.s, v=total(r.h), fill=v>=4?"#f4b400":v>=1?"#ffd75e":"#fff";
+    g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="${m?3.5:5}" fill="${fill}" stroke="#2b3036" stroke-width="1.2"/>
       <text x="${px(s.lon)+6}" y="${py(s.lat)+(s.name==="Hoher Kasten"?-6:s.name==="Säntis"?12:4)}" font-size="10.5" fill="#2b3036" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".7">${s.name.replace(" Kulm","")}</text>`});
   const hv=total(H.d[d]);
   g+=`<circle cx="${px(H.lon)}" cy="${py(H.lat)}" r="6" fill="#2b3036"/><text x="${px(H.lon)+9}" y="${py(H.lat)-7}" font-size="12" font-weight="600" fill="#2b3036" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".7">Winterthur ${hv>=1?"☀︎":"☁︎"}</text>`;
