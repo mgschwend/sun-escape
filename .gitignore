@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+data/grib/
+data/meta_point.raw.csv
+site/data/
+.DS_Store

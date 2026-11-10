@@ -1,0 +1,66 @@
+name: build-and-deploy
+
+on:
+  schedule:
+    - cron: "35 */3 * * *"   # every 3 h, ~2.5 h after each ICON-CH1 run (00, 03, ... UTC)
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write      # keepalive commit only
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"   # same as local; pinned wheels
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Cache ICON grid index
+        uses: actions/cache@v4
+        with:
+          path: data/grib/regrid-ch1-*.npy
+          key: icon-ch1-regrid-v1
+
+      - name: Spot forecasts (MeteoSwiss local forecast)
+        run: python pipeline/reduce_forecast.py
+      - name: Sunshine map (ICON-CH1 DURSUN)
+        run: python pipeline/sun_map.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      # GitHub disables scheduled workflows after 60 days without repo activity
+      - name: Keepalive
+        if: github.event_name == 'schedule'
+        run: |
+          last=$(git log -1 --format=%ct)
+          if [ $(( $(date +%s) - last )) -gt $(( 45*86400 )) ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "keepalive: scheduled builds stay enabled"
+            git push
+          fi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
