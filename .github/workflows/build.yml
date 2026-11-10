@@ -31,12 +31,12 @@ jobs:
       - name: Cache ICON grid index
         uses: actions/cache@v4
         with:
-          path: data/grib/regrid-ch1-*.npy
-          key: icon-ch1-regrid-v1
+          path: data/grib/regrid-*.npy
+          key: icon-regrid-v2
 
       - name: Spot forecasts (MeteoSwiss local forecast)
         run: python pipeline/reduce_forecast.py
-      - name: Sunshine map (ICON-CH1 DURSUN)
+      - name: Sunshine maps (ICON-CH1 1 km, ICON-CH2 2 km, DURSUN)
         run: python pipeline/sun_map.py
 
       - uses: actions/upload-pages-artifact@v3

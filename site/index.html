@@ -164,7 +164,7 @@ let DATA, MAPS, days9, sel=0, dep=9.5;
 const now=new Date(), nowL=local(now), nowH=nowL.hour+now.getMinutes()/60;
 
 async function main(){
-  [DATA, MAPS] = await Promise.all([fetch("data/spots.json").then(r=>r.json()), fetch("data/sunmap.json").then(r=>r.json()).catch(()=>null)]);
+  [DATA, MAPS] = await Promise.all([fetch("data/spots.json",{cache:"no-cache"}).then(r=>r.json()), fetch("data/sunmap.json",{cache:"no-cache"}).then(r=>r.json()).catch(()=>null)]);
   DATA.home.d=byDay(DATA.home); DATA.spots.forEach(s=>s.d=byDay(s));
   days9=Object.keys(DATA.home.d).filter(d=>d>=nowL.date).slice(0,9);
   const run=parseStamp(DATA.run_utc);
@@ -264,8 +264,8 @@ function renderMap(rows,d,label){
     img=`<image href="data/${m.png}" x="${px(x0)}" y="${py(y1)}" width="${px(x1)-px(x0)}" height="${py(y0)-py(y1)}" preserveAspectRatio="none" clip-path="url(#chclip)"/>`;}
   document.getElementById("maxh").textContent=(MAPS?MAPS.full_yellow_h:9)+" h";
   document.getElementById("mapnote").textContent = m
-    ? `transparent = no sun · full yellow = ${MAPS.full_yellow_h} h · ICON-CH1 runs ${m.runs_used.join(", ")} · dashed ring ≈ 2 h by train (schematic)`
-    : `no map for ${label}: ICON-CH1 only reaches 33 h ahead`;
+    ? `transparent = no sun · full yellow = ${MAPS.full_yellow_h} h · ${m.model} (${m.res_km} km), runs ${m.runs_used.join(", ")} · dashed ring ≈ 2 h by train (schematic)`
+    : `no sunshine map this far ahead (models reach 5 days)`;
   let g=`<defs><clipPath id="chclip"><path d="${path}"/></clipPath></defs><path d="${path}" fill="#dfe3e6"/>${img}<path d="${path}" fill="none" stroke="#7d868f" stroke-width="1.2"/>`;
   const H=DATA.home, r2=2*55*K/111;
   g+=`<circle cx="${px(H.lon)}" cy="${py(H.lat)}" r="${r2}" fill="none" stroke="#2b3036" stroke-dasharray="3 5" opacity=".45"/>`;

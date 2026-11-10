@@ -7,7 +7,7 @@ Personal dashboard: is Winterthur in a sun drought, and where is the nearest sun
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 python3 pipeline/reduce_forecast.py          # ~1 s  -> site/data/spots.json (~10 KB)
-.venv/bin/python pipeline/sun_map.py         # ~6 s  -> site/data/sunmap-*.png + sunmap.json
+.venv/bin/python pipeline/sun_map.py         # ~10 s -> site/data/sunmap-*.png + sunmap.json
 python3 -m http.server 8766 -d site          # open http://localhost:8766
 ```
 
@@ -18,7 +18,7 @@ python3 -m http.server 8766 -d site          # open http://localhost:8766
 | `config/spots.json` | curated spots: coords, MeteoSwiss `point_id` + `point_type_id`, hand-entered travel time, changes, longest seated stretch, last ride down |
 | `pipeline/match_points.py` | review table: nearest MeteoSwiss forecast points per spot (all 15 matched within 0.8 km / 66 m) |
 | `pipeline/reduce_forecast.py` | streams the newest ~30 MB `sre000h0` CSV, keeps the configured points |
-| `pipeline/sun_map.py` | ICON-CH1-EPS control run `DURSUN` → 0.01° PNG per day (today + tomorrow), stitched from a chain of runs |
+| `pipeline/sun_map.py` | `DURSUN` control run → PNG per day, stitched from a chain of runs: ICON-CH1 (1 km, today + tomorrow), then ICON-CH2 (2 km, up to ~day 5) |
 | `site/index.html` | dashboard (from the mock-up), reads `data/*.json` |
 
 ## Findings (verified 2026-11-10)
