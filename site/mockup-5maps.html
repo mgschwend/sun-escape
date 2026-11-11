@@ -141,13 +141,9 @@
 
   <div class="stack">
     <section class="panel mappanel">
-      <h2 id="maptitle">Forecast sunshine · next 5 days <span class="sub" style="text-transform:none;letter-spacing:0;font-weight:400">· click a map for trip details</span></h2>
+      <h2 id="maptitle">Forecast sunshine · next 5 days</h2>
       <div class="maprow" id="maprow"></div>
       <div class="maplegend" style="justify-content:center"><span>0 h</span><i></i><span id="maxh">9 h</span><span class="sub" style="margin-left:14px" id="mapnote"></span></div>
-      <div class="sunbox" id="sunbox"><div class="ico" id="sunico">☀︎</div><div style="flex:1">
-        <div class="t" id="suntitle"></div><div class="alt" id="sunalt"></div>
-        <div class="ctl"><label class="slider">Leave at <input type="range" id="dep" min="7" max="14" step="0.25" value="9.5"><b id="depv">09:30</b></label><span id="depnote"></span></div>
-      </div></div>
     </section>
 
     <section class="panel">
@@ -196,7 +192,6 @@ async function main(){
   document.getElementById("badge").textContent=`Live data · MeteoSwiss run ${run.toLocaleString("en-GB",{timeZone:TZ,weekday:"short",hour:"2-digit",minute:"2-digit"})}`;
   hero();
   document.addEventListener("keydown",e=>{if(e.key==="ArrowLeft")select(sel-1);if(e.key==="ArrowRight")select(sel+1);});
-  document.getElementById("dep").oninput=e=>{dep=+e.target.value;render()};
   render();
 }
 
@@ -249,28 +244,11 @@ function eff(s,d,depH){
 function render(){
   const d=days9[sel];
   const depH = sel===0 ? Math.max(dep, nowH) : dep;
-  document.getElementById("depv").textContent=fmt(depH);
-  document.getElementById("depnote").textContent = sel===0 && nowH>dep ? "leaving now (slider is in the past)" : "";
   const all=DATA.spots.map(s=>({s,...eff(s,d,depH)})).sort((a,b)=>a.s.travel_min-b.s.travel_min||a.s.changes-b.s.changes);
   const sunny=all.filter(r=>r.e>=1);
   const label = sel===0?"today":sel===1?"tomorrow":"on "+longDay(d);
   const ride = s => s.changes===0?"direct":`${s.changes} change${s.changes>1?"s":""}`;
   const window_ = r => {const hrs=r.h.map((f,i)=>f>0.15&&i+1>r.arr?i:-1).filter(i=>i>=0); return hrs.length?`${fmt(Math.max(hrs[0],r.arr))}–${fmt(hrs[hrs.length-1]+1)}`:"";};
-  const box=document.getElementById("sunbox"), n0=sunny[0];
-  box.classList.toggle("none", !n0);
-  document.getElementById("sunico").textContent = n0 ? "☀︎" : "☁︎";
-  if(n0){
-    document.getElementById("suntitle").innerHTML=`Nearest sun ${label}: ${n0.s.name} <span class="tt">· ${dur(n0.s.travel_min)}</span>`;
-    const rest=sunny.slice(1,3).map(r=>`${r.s.name} ${dur(r.s.travel_min)} (☀ ${r.e.toFixed(1)} h)`).join(" · ");
-    const homeSun=total(DATA.home.d[d]);
-    document.getElementById("sunalt").innerHTML=`${homeSun>=1?`<b>Sun at home too</b> (Winterthur ${homeSun.toFixed(1)} h) · `:""}${ride(n0.s)} · arrive ${fmt(n0.arr)} · <b>☀ ${n0.e.toFixed(1)} h for you</b> (${window_(n0)}) · ${n0.s.region}${rest?`<br>Next: ${rest}`:""}`;
-  } else {
-    const best=[...all].sort((a,b)=>total(b.h)-total(a.h))[0];
-    document.getElementById("suntitle").textContent=`No sun at the ${all.length} spots ${label}`;
-    document.getElementById("sunalt").innerHTML= total(best.h)>0.5 && best.e<1
-      ? `${best.s.name} gets ${total(best.h).toFixed(1)} h, but not after you'd arrive. Try leaving earlier.`
-      : `Best of them: ${best.s.name}, ${total(best.h).toFixed(1)} h all day.`;
-  }
   dayStrip(); renderMaps();
 }
 
