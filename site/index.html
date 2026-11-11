@@ -151,11 +151,6 @@
       </div>
     </section>
 
-    <section class="panel">
-      <h2 id="proftitle">Altitude vs. sun</h2>
-      <div style="max-width:720px;margin:0 auto"><svg id="profile" viewBox="0 0 520 304" width="100%"></svg></div>
-      <div class="note">Forecast sunshine per spot for the selected day. Fog top isn't inferred yet.</div>
-    </section>
   </div>
 
   <footer id="footer">Source: MeteoSwiss (OGD local forecast sre000h0, ICON-CH1/CH2 DURSUN, SwissMetNet). Spots curated from 14 winters of station data (docs/winter-sun-spots.md). Train times: one transport.opendata.ch sample, OJP 2.0 later.</footer>
@@ -268,24 +263,7 @@ function render(){
       ? `${best.s.name} gets ${total(best.h).toFixed(1)} h, but not after you'd arrive. Try leaving earlier.`
       : `Best of them: ${best.s.name}, ${total(best.h).toFixed(1)} h all day.`;
   }
-  dayNav(); dayStrip(); profile(d,label); renderMap(all,d,label,n0);
-}
-
-function profile(d,label){
-  document.getElementById("proftitle").textContent=`Altitude vs. sun ${label}`;
-  const svg=document.getElementById("profile"), W=520,H=300,L=56,R=16,T=12,B=34;
-  const AMIN=200,AMAX=2600, y=a=>T+(1-(a-AMIN)/(AMAX-AMIN))*(H-T-B), x=h=>L+Math.min(h,9)/9*(W-L-R);
-  let g="";
-  [500,1000,1500,2000,2500].forEach(a=>g+=`<line x1="${L}" x2="${W-R}" y1="${y(a)}" y2="${y(a)}" stroke="#d6dade" stroke-opacity=".8"/><text x="${L-8}" y="${y(a)+4}" font-size="11" text-anchor="end" fill="#5c656e">${a} m</text>`);
-  [0,3,6,9].forEach(h=>g+=`<text x="${x(h)}" y="${H-12}" font-size="11" text-anchor="middle" fill="#5c656e">${h} h</text>`);
-  g+=`<text x="${(L+W-R)/2}" y="${H}" font-size="11" text-anchor="middle" fill="#5c656e">forecast sunshine ${label}</text>`;
-  const pts=[...DATA.spots.map(s=>({n:s.name,alt:s.alt,v:total(s.d[d])})),{n:"Winterthur",alt:DATA.home.alt,v:total(DATA.home.d[d]),me:true}];
-  pts.sort((a,b)=>a.alt-b.alt);
-  let lastY=-99;
-  pts.forEach(p=>{const c=p.v>4?"#f4b400":p.v>1?"#ffd75e":"#9aa3ab", cx=x(p.v), cy=y(p.alt);
-    g+=`<circle cx="${cx}" cy="${cy}" r="${p.me?7:5}" fill="${c}" stroke="${p.me?"#2b3036":"#fff"}" stroke-width="1.5"/>`;
-    const right=cx<W/2; g+=`<text x="${right?cx+10:cx-9}" y="${cy+4}" font-size="11" ${right?"":'text-anchor="end"'} fill="#2b3036"${p.me?' font-weight="600"':''}>${p.n.replace(" Kulm","")}${p.me?" (you)":""}</text>`;});
-  svg.innerHTML=g;
+  dayNav(); dayStrip(); renderMap(all,d,label,n0);
 }
 
 function renderMap(rows,d,label,n0){
