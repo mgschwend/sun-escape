@@ -19,7 +19,7 @@ python3 -m http.server 8766 -d site          # open http://localhost:8766
 | `pipeline/match_points.py` | review table: nearest MeteoSwiss forecast points per spot (all 15 matched within 0.8 km / 66 m) |
 | `pipeline/reduce_forecast.py` | streams the newest ~30 MB `sre000h0` CSV, keeps the configured points |
 | `pipeline/sun_map.py` | `DURSUN` control run → PNG per day, stitched from a chain of runs: ICON-CH1 (1 km, today + tomorrow), then ICON-CH2 (2 km, up to ~day 5) |
-| `site/index.html` | dashboard: banner, map with 9-day switcher + nearest-sun box, 9-day strip, altitude chart; reads `data/*.json` |
+| `site/index.html` | dashboard: banner, 5 day maps in a row (spots coloured by forecast, ring = nearest sun after a 09:30 departure), 9-day strip for Winterthur; reads `data/*.json` |
 
 ## Findings (verified 2026-11-10)
 
