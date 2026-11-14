@@ -211,7 +211,8 @@ function hero(){
   document.getElementById("herometa").innerHTML=`<span>Sun next 9 days: <b>${tot.reduce((a,b)=>a+b,0).toFixed(1)} h</b></span><span>Source: MeteoSwiss local forecast, ZIP 8400</span><span>Last day with ≥ 2 h sun: not built yet (needs station history)</span>`;
   const n=document.getElementById("nexthome");
   if(first<0){n.textContent="No sun at home in the forecast";return;}
-  const h=DATA.home.d[days9[first]], hrs=h.map((v,i)=>v>0.15&&(first>0||i>=Math.floor(nowH))?i:-1).filter(i=>i>=0);
+  // sun spread thinly over many hours (e.g. 0.1 h each) must still give a window: threshold = min(0.15, half the day's peak)
+  const h=DATA.home.d[days9[first]], thr=Math.min(0.15,Math.max(...h)/2), hrs=h.map((v,i)=>v>=thr&&v>0&&(first>0||i>=Math.floor(nowH))?i:-1).filter(i=>i>=0);
   n.textContent=`Next sun at home: ${longDay(days9[first])}, ~${fmt(hrs[0])}–${fmt(hrs[hrs.length-1]+1)} (≈ ${ahead[first].toFixed(1)} h)`;
 }
 

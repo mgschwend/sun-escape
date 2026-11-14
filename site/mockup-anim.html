@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sun Escape</title>
+<style>
+  :root{
+    --fog:#dfe3e6; --fog-2:#c9cfd4; --fog-3:#9aa3ab; --ink:#2b3036; --ink-2:#5c656e;
+    --sun:#f4b400; --sun-2:#ffd75e; --sun-bg:#fff6d6; --card:#f5f6f7; --alert:#6b7580;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;color:var(--ink);
+       background:linear-gradient(180deg,#cfd5da 0%,#e6e9ec 320px,#eef0f2 100%);}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+  .mockbadge{display:inline-block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:#fff;
+       border:1px dashed var(--fog-3);color:var(--ink-2);padding:2px 8px;border-radius:99px}
+  header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0;font-weight:650;letter-spacing:-.01em}
+  h1 span{color:var(--ink-2);font-weight:450}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:0 0 12px;font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  .panel{background:var(--card);border-radius:16px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .full{grid-column:1/-1}
+  /* hero */
+  .hero{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;
+        background:linear-gradient(120deg,#8d979f,#b7bfc5);color:#fff;border-radius:20px;padding:22px 26px}
+  .hero .big{font-size:56px;line-height:1}
+  .hero h3{margin:0;font-size:26px;font-weight:650;letter-spacing:-.01em}
+  .hero p{margin:4px 0 0;opacity:.92}
+  .hero .meta{margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;font-size:13px;opacity:.95}
+  .hero .meta b{font-weight:650}
+  /* day strip */
+  .days{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;align-items:end;height:150px;margin-top:6px}
+  .day{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+  .bar{width:100%;max-width:46px;border-radius:8px 8px 4px 4px;background:var(--fog-2);min-height:4px;position:relative}
+  .bar.sun{background:linear-gradient(180deg,var(--sun-2),var(--sun))}
+  .bar .v{position:absolute;top:-19px;left:0;right:0;text-align:center;font-size:12px;color:var(--ink-2)}
+  .day .lbl{font-size:12px;color:var(--ink-2)}
+  .day.today .lbl{font-weight:700;color:var(--ink)}
+  .drought{grid-column:1/5;border-top:2px dashed var(--alert);margin-top:-4px;position:relative}
+  .legend{font-size:12px;color:var(--ink-2);margin-top:12px}
+  /* controls */
+  .controls{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .seg{display:inline-flex;background:#fff;border-radius:99px;padding:3px;border:1px solid var(--fog-2)}
+  .seg button{border:0;background:none;padding:5px 12px;border-radius:99px;font:inherit;font-size:13px;color:var(--ink-2);cursor:pointer}
+  .seg button.on{background:var(--ink);color:#fff}
+  .slider{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+  .slider input{width:180px;accent-color:var(--sun)}
+  .slider b{color:var(--ink);font-variant-numeric:tabular-nums;min-width:44px;display:inline-block}
+  /* list */
+  .list{display:flex;flex-direction:column;gap:8px}
+  .row{display:grid;grid-template-columns:28px 1fr 120px 92px;gap:12px;align-items:center;background:#fff;border-radius:12px;padding:10px 14px}
+  .row.top{background:var(--sun-bg);outline:1px solid #f3dd8c}
+  .rank{font-weight:700;color:var(--ink-2);font-size:13px}
+  .name{font-weight:620}
+  .sub{font-size:12px;color:var(--ink-2)}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;background:var(--fog);color:var(--ink-2);margin-left:6px;vertical-align:1px}
+  .tag.live{background:#e7f6e7;color:#2f7a33}
+  .ride{margin-top:2px}.ride b{color:#2f7a33}
+  .grouphead{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:10px 0 2px 4px}
+  .row.dim{opacity:.6}
+  .maplegend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);margin-top:8px;flex-wrap:wrap}
+  .maplegend i{display:inline-block;width:160px;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(244,180,0,0),rgba(244,180,0,1));outline:1px solid var(--fog-2)}
+  .far{background:#fff;border-radius:12px;padding:10px 14px;font-size:13px;color:var(--ink-2)}
+  .far summary{cursor:pointer}
+  .tag.closed{background:#fde8e6;color:#a3342a}
+  .tag.above{background:#fff0bf;color:#8a6500}
+  .eff{text-align:right}
+  .eff .n{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .eff .n.zero{color:var(--fog-3)}
+  .hours{display:flex;gap:2px;height:16px;align-items:stretch}
+  .hours i{flex:1;border-radius:2px;background:var(--fog)}
+  .hours i.s1{background:#ffe59a}.hours i.s2{background:var(--sun-2)}.hours i.s3{background:var(--sun)}
+  .hours i.gone{opacity:.25}
+  .hours i.arr{box-shadow:inset 2px 0 0 var(--ink)}
+  /* map + profile */
+  svg text{font-family:inherit}
+  .note{font-size:12px;color:var(--ink-2);margin-top:8px}
+  .alertbox{display:flex;gap:12px;align-items:flex-start;background:#fff;border-radius:12px;padding:12px 14px;margin-top:10px;border-left:4px solid var(--sun)}
+  .alertbox .t{font-weight:620}
+  footer{margin-top:22px;font-size:12px;color:var(--ink-2)}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}.row{grid-template-columns:24px 1fr 80px}.row .hours{display:none}}
+
+  /* layout v2: map first, day switcher, wide strip */
+  .hero.sunny{background:linear-gradient(120deg,#f4b400,#ffd75e);color:var(--ink)}
+  .hero.sunny .meta{opacity:.85}
+  .mockbadge.v2{background:#fff3c4;border-color:#f4b400}
+  .stack{display:flex;flex-direction:column;gap:18px;margin-top:18px}
+  .mappanel .mapbox{max-width:720px;margin:0 auto}
+  .daynav{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;margin:2px 0 10px}
+  .daynav .arrow{border:1px solid var(--fog-2);background:#fff;border-radius:99px;width:32px;height:32px;font-size:16px;cursor:pointer;color:var(--ink)}
+  .daynav .arrow:disabled{opacity:.35;cursor:default}
+  .daynav .chip{border:1px solid var(--fog-2);background:#fff;border-radius:10px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-2);line-height:1.25;text-align:center}
+  .daynav .chip b{display:block;font-size:13px;color:var(--ink)}
+  .daynav .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .daynav .chip.on b{color:#fff}
+  .daynav .chip .q{font-size:10.5px;opacity:.8}
+  .mapcap{text-align:center;font-size:13px;color:var(--ink-2);margin-top:-2px}
+  .mapcap b{color:var(--ink)}
+  .days.wide{height:92px;gap:10px;margin-top:26px}   /* room for the value label on the tallest bar */
+  .days.wide .bar{max-width:none;border-radius:6px 6px 3px 3px}
+  .days.wide .day{cursor:pointer;border-radius:8px;padding:0 4px 2px}
+  .days.wide .day.sel{background:#fff;box-shadow:0 0 0 2px var(--ink) inset}
+  .stripfoot{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .stripfoot .alertbox{margin-top:0}
+  .sunbox{display:flex;gap:14px;align-items:flex-start;background:#fff;border-radius:12px;padding:14px 16px;margin:12px auto 4px;max-width:720px;border-left:5px solid var(--sun)}
+  .sunbox.none{border-left-color:var(--fog-3)}
+  .sunbox .ico{font-size:26px;line-height:1}
+  .sunbox .t{font-size:17px;font-weight:650}
+  .sunbox .t .tt{font-variant-numeric:tabular-nums}
+  .sunbox .alt{font-size:13px;color:var(--ink-2);margin-top:4px}
+  .sunbox .ctl{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--ink-2)}
+  /* 5 maps in a row */
+  .maprow{display:grid;grid-template-columns:repeat(5,minmax(170px,1fr));gap:10px;overflow-x:auto;padding:2px}
+  .tile{background:#fff;border-radius:12px;padding:8px 8px 10px;cursor:pointer;border:2px solid transparent}
+  .tile.sel{border-color:var(--ink)}
+  .tile .th{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-2)}
+  .tile .th b{color:var(--ink);font-size:13.5px}
+  .tile .q{font-size:10.5px;background:var(--fog);border-radius:99px;padding:0 6px}
+  .tile .tc{font-size:12px;color:var(--ink-2);margin-top:4px;line-height:1.35}
+  .tile .tc b{color:var(--ink)}
+  .tile .tc .s{color:#8a6500;font-weight:620}
+  /* animated hourly map */
+  .anim .mapbox{max-width:720px;margin:0 auto;position:relative}
+  .anim .now{text-align:center;font-size:15px;margin:2px 0 8px}
+  .anim .now b{font-variant-numeric:tabular-nums}
+  .anim .ctl{display:flex;align-items:center;gap:10px;max-width:720px;margin:8px auto 0}
+  .anim .ctl button{border:1px solid var(--fog-2);background:#fff;border-radius:99px;width:34px;height:34px;font-size:15px;cursor:pointer;color:var(--ink);flex:none}
+  .anim .ctl button.play{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tl{flex:1;display:flex;gap:6px;min-width:0}
+  .tl .dg{flex:1;min-width:0}
+  .tl .dl{font-size:11px;color:var(--ink-2);margin-bottom:3px;white-space:nowrap;overflow:hidden}
+  .tl .cells{display:flex;gap:1px;height:26px}
+  .tl .c{flex:1;border-radius:2px;background:var(--fog);cursor:pointer;position:relative}
+  .tl .c.home::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:3px;border-radius:2px;background:var(--ink)}
+  .tl .c.on{outline:2px solid var(--ink);outline-offset:1px;z-index:1}
+  .tl .c.past{opacity:.45}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Sun Escape <span>· Winterthur</span></h1>
+    <span class="mockbadge v2">Mock-up · hourly animation</span> <span class="mockbadge" id="badge">loading…</span>
+  </header>
+
+  <section class="hero" style="margin-top:16px">
+    <div class="big" id="heroicon">☁︎</div>
+    <div>
+      <h3 id="herotitle"></h3>
+      <p id="herotext"></p>
+      <div class="meta" id="herometa"></div>
+    </div>
+  </section>
+
+  <div class="stack">
+    <section class="panel mappanel">
+      <h2 id="maptitle">Forecast sunshine · next 5 days</h2>
+      <div class="maprow" id="maprow"></div>
+      <div class="maplegend" style="justify-content:center"><span>0 h</span><i></i><span id="maxh">9 h</span><span class="sub" style="margin-left:14px" id="mapnote"></span></div>
+    </section>
+
+    <section class="panel anim">
+      <h2>Sun hour by hour · next 5 days</h2>
+      <div class="now" id="anow"></div>
+      <div class="mapbox"><svg id="amap" viewBox="0 0 600 390" width="100%"></svg></div>
+      <div class="ctl"><button class="play" id="aplay" title="Play / pause">▶</button><button id="aprev" title="Previous hour">‹</button><button id="anext" title="Next hour">›</button><div class="tl" id="atl"></div></div>
+      <div class="maplegend" style="justify-content:center;margin-top:14px"><span>0 min</span><i></i><span>60 min of sun in the hour</span><span class="sub" style="margin-left:14px">timeline: colour = how many of the 6 spots have sun · dark line = sun in Winterthur · dimmed = past</span></div>
+    </section>
+
+    <section class="panel">
+      <h2>Winterthur · sunshine hours, next 9 days</h2>
+      <div class="days wide" id="days"></div>
+      <div class="stripfoot">
+        <div class="legend" style="margin:0">Grey = under 1 h of sun. 3+ grey days in a row = "sun drought" (banner).</div>
+        <div class="alertbox"><div style="font-size:18px">☀︎</div><div><div class="t" id="nexthome"></div></div></div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer id="footer">Source: MeteoSwiss (OGD local forecast sre000h0, ICON-CH1/CH2 DURSUN, SwissMetNet). Spots curated from 14 winters of station data (docs/winter-sun-spots.md). Train times: one transport.opendata.ch sample, OJP 2.0 later.</footer>
+</div>
+
+<script>
+const CH=[[6.075,46.432],[6.233,46.654],[6.393,46.747],[6.473,46.957],[6.64,47.003],[6.719,47.052],[6.705,47.059],[6.707,47.083],[6.746,47.1],[6.787,47.125],[6.84,47.153],[6.842,47.172],[6.874,47.186],[6.897,47.209],[6.943,47.235],[6.952,47.27],[6.971,47.292],[7.012,47.309],[7.061,47.345],[6.995,47.363],[6.897,47.358],[6.915,47.404],[6.986,47.493],[7.173,47.49],[7.178,47.466],[7.179,47.462],[7.17,47.444],[7.264,47.426],[7.295,47.435],[7.322,47.439],[7.34,47.441],[7.357,47.434],[7.376,47.433],[7.435,47.46],[7.485,47.482],[7.526,47.532],[7.505,47.544],[7.636,47.588],[7.638,47.56],[7.726,47.542],[7.806,47.566],[7.86,47.587],[7.912,47.551],[7.97,47.556],[8.048,47.556],[8.099,47.562],[8.138,47.586],[8.176,47.602],[8.224,47.607],[8.267,47.609],[8.314,47.581],[8.385,47.567],[8.473,47.576],[8.471,47.606],[8.538,47.631],[8.586,47.601],[8.607,47.652],[8.62,47.659],[8.528,47.658],[8.473,47.641],[8.416,47.709],[8.469,47.758],[8.574,47.79],[8.636,47.761],[8.686,47.767],[8.733,47.719],[8.776,47.68],[8.784,47.705],[8.823,47.716],[8.854,47.697],[8.892,47.649],[8.941,47.656],[8.986,47.675],[9.083,47.679],[9.135,47.665],[9.581,47.483],[9.657,47.453],[9.605,47.351],[9.497,47.207],[9.536,47.064],[9.579,47.053],[9.613,47.056],[9.643,47.057],[9.662,47.059],[9.686,47.057],[9.71,47.047],[9.733,47.043],[9.755,47.037],[9.777,47.038],[9.798,47.03],[9.813,47.022],[9.828,47.017],[9.852,47.016],[9.879,47.02],[9.873,47.007],[9.889,46.988],[9.879,46.975],[9.877,46.959],[9.877,46.942],[9.884,46.933],[9.91,46.926],[9.939,46.913],[9.963,46.913],[9.981,46.908],[10.002,46.899],[10.024,46.897],[10.041,46.884],[10.051,46.867],[10.086,46.861],[10.109,46.842],[10.13,46.848],[10.151,46.851],[10.182,46.855],[10.198,46.867],[10.232,46.874],[10.231,46.889],[10.233,46.901],[10.241,46.923],[10.317,46.928],[10.31,46.95],[10.343,46.982],[10.36,46.991],[10.388,47.0],[10.415,46.982],[10.426,46.976],[10.423,46.965],[10.435,46.956],[10.455,46.953],[10.475,46.943],[10.487,46.924],[10.465,46.884],[10.46,46.834],[10.452,46.807],[10.437,46.776],[10.409,46.738],[10.418,46.717],[10.391,46.688],[10.392,46.667],[10.4,46.646],[10.485,46.603],[10.483,46.576],[10.475,46.552],[10.42,46.551],[10.395,46.545],[10.352,46.555],[10.319,46.548],[10.292,46.562],[10.27,46.577],[10.245,46.595],[10.228,46.63],[10.146,46.612],[10.115,46.607],[10.097,46.595],[10.09,46.576],[10.068,46.55],[10.052,46.53],[10.044,46.504],[10.045,46.477],[10.04,46.446],[10.078,46.427],[10.103,46.425],[10.132,46.43],[10.156,46.415],[10.163,46.395],[10.144,46.386],[10.126,46.371],[10.111,46.353],[10.106,46.332],[10.129,46.309],[10.15,46.294],[10.162,46.275],[10.099,46.228],[10.049,46.228],[10.056,46.243],[10.056,46.263],[10.032,46.276],[10.007,46.282],[10.0,46.305],[9.988,46.319],[9.996,46.342],[9.972,46.36],[9.925,46.366],[9.894,46.376],[9.872,46.364],[9.838,46.362],[9.805,46.346],[9.772,46.336],[9.74,46.35],[9.718,46.326],[9.722,46.309],[9.704,46.291],[9.677,46.302],[9.651,46.292],[9.621,46.288],[9.592,46.294],[9.568,46.3],[9.539,46.308],[9.513,46.336],[9.497,46.363],[9.461,46.376],[9.465,46.4],[9.455,46.42],[9.46,46.452],[9.464,46.479],[9.428,46.492],[9.418,46.473],[9.39,46.473],[9.369,46.493],[9.362,46.509],[9.312,46.504],[9.278,46.488],[9.273,46.466],[9.263,46.45],[9.257,46.427],[9.281,46.412],[9.279,46.389],[9.277,46.37],[9.296,46.355],[9.295,46.34],[9.295,46.319],[9.284,46.297],[9.264,46.28],[9.253,46.263],[9.249,46.244],[9.239,46.233],[9.22,46.221],[9.201,46.204],[9.195,46.182],[9.177,46.171],[9.141,46.155],[9.106,46.132],[9.073,46.117],[9.061,46.061],[9.009,46.027],[8.99,45.971],[9.045,45.926],[9.084,45.894],[9.049,45.853],[9.034,45.829],[9.034,45.824],[9.014,45.819],[8.994,45.826],[8.988,45.838],[8.962,45.838],[8.933,45.838],[8.916,45.832],[8.934,45.874],[8.872,45.96],[8.839,45.984],[8.83,46.042],[8.822,46.093],[8.762,46.101],[8.691,46.102],[8.681,46.107],[8.668,46.11],[8.631,46.122],[8.611,46.128],[8.603,46.154],[8.554,46.191],[8.503,46.226],[8.466,46.239],[8.442,46.253],[8.436,46.287],[8.439,46.308],[8.456,46.327],[8.462,46.351],[8.466,46.377],[8.47,46.398],[8.461,46.419],[8.464,46.44],[8.44,46.463],[8.406,46.458],[8.377,46.452],[8.335,46.431],[8.297,46.413],[8.316,46.393],[8.291,46.37],[8.262,46.361],[8.248,46.34],[8.224,46.332],[8.213,46.315],[8.163,46.296],[8.13,46.296],[8.105,46.28],[8.082,46.261],[8.115,46.236],[8.166,46.18],[8.153,46.154],[8.136,46.137],[8.114,46.12],[8.086,46.107],[8.052,46.102],[8.031,46.091],[8.023,46.073],[8.028,46.056],[8.034,46.045],[8.018,46.036],[8.012,46.012],[7.99,45.997],[7.956,45.997],[7.919,45.996],[7.886,45.976],[7.877,45.949],[7.786,45.928],[7.713,45.928],[7.684,45.956],[7.659,45.976],[7.634,45.97],[7.604,45.97],[7.565,45.987],[7.544,45.969],[7.518,45.963],[7.472,45.945],[7.447,45.931],[7.427,45.915],[7.393,45.902],[7.359,45.906],[7.317,45.915],[7.285,45.915],[7.27,45.899],[7.237,45.89],[7.202,45.876],[7.181,45.862],[7.145,45.876],[7.119,45.86],[7.097,45.866],[7.077,45.891],[7.05,45.918],[7.036,45.938],[7.036,45.956],[7.011,45.967],[7.012,45.989],[6.985,46.005],[6.95,46.052],[6.936,46.062],[6.909,46.05],[6.877,46.047],[6.889,46.077],[6.888,46.101],[6.891,46.125],[6.846,46.128],[6.822,46.131],[6.793,46.149],[6.805,46.173],[6.814,46.216],[6.837,46.24],[6.842,46.295],[6.812,46.319],[6.786,46.332],[6.774,46.363],[6.784,46.367],[6.796,46.371],[6.806,46.381],[6.804,46.393],[6.249,46.302],[6.249,46.295],[6.252,46.288],[6.238,46.282],[6.243,46.273],[6.292,46.264],[6.294,46.259],[6.299,46.255],[6.306,46.251],[6.264,46.213],[6.241,46.205],[6.227,46.202],[6.216,46.196],[6.209,46.193],[6.199,46.185],[6.187,46.18],[6.137,46.143],[6.106,46.144],[6.034,46.137],[6.026,46.14],[6.013,46.142],[6.003,46.142],[5.995,46.144],[5.973,46.132],[5.963,46.136],[5.986,46.171],[5.993,46.18],[5.995,46.183],[5.964,46.198],[5.969,46.201],[5.972,46.204],[5.984,46.217],[5.992,46.22],[6.006,46.224],[6.013,46.23],[6.023,46.233],[6.064,46.245],[6.083,46.246],[6.113,46.268],[6.105,46.281],[6.119,46.296],[6.121,46.307],[6.126,46.317],[6.138,46.333],[6.15,46.344],[6.159,46.357],[6.157,46.378],[6.075,46.432]];
+const K=180, px=lon=>20+(lon-5.9)*K*0.684, py=lat=>14+(47.85-lat)*K;
+const TZ="Europe/Zurich";
+const fmt = t => String(Math.floor(t)).padStart(2,"0")+":"+String(Math.round((t%1)*60)).padStart(2,"0");
+const dur = m => `${Math.floor(m/60)} h ${String(m%60).padStart(2,"0")}`;
+const partsFmt = new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
+function local(d){const p=Object.fromEntries(partsFmt.formatToParts(d).map(x=>[x.type,x.value]));return {date:`${p.year}-${p.month}-${p.day}`, hour:+p.hour};}
+const dayName = iso => new Date(iso+"T12:00:00Z").toLocaleDateString("en-GB",{weekday:"short",timeZone:TZ});
+const longDay = iso => new Date(iso+"T12:00:00Z").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",timeZone:TZ});
+const parseStamp = s => new Date(Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10),+s.slice(10,12)));
+
+// value at UTC timestamp t = sunshine minutes in the hour ENDING at t -> bucket by the hour's local start
+function byDay(p){
+  const t0=parseStamp(p.start_utc), out={};
+  p.sun_min.forEach((v,i)=>{const start=new Date(t0.getTime()+(i-1)*3600e3), l=local(start);
+    (out[l.date] ||= Array(24).fill(0))[l.hour]=(v||0)/60;});
+  return out;   // {date: [24 fractions of an hour]}
+}
+const total = arr => arr ? arr.reduce((a,b)=>a+b,0) : 0;
+
+let FR, fi=0, timer=null, DATA, MAPS, days9, sel=0, dep=9.5;
+const now=new Date(), nowL=local(now), nowH=nowL.hour+now.getMinutes()/60;
+
+async function main(){
+  [DATA, MAPS, FR] = await Promise.all([fetch("data/spots.json",{cache:"no-cache"}).then(r=>r.json()), fetch("data/sunmap.json",{cache:"no-cache"}).then(r=>r.json()).catch(()=>null), fetch("data/sunframes.json",{cache:"no-cache"}).then(r=>r.json()).catch(()=>null)]);
+  DATA.home.d=byDay(DATA.home); DATA.spots.forEach(s=>s.d=byDay(s));
+  days9=Object.keys(DATA.home.d).filter(d=>d>=nowL.date).slice(0,9);
+  const run=parseStamp(DATA.run_utc);
+  document.getElementById("badge").textContent=`Live data · MeteoSwiss run ${run.toLocaleString("en-GB",{timeZone:TZ,weekday:"short",hour:"2-digit",minute:"2-digit"})}`;
+  hero();
+  document.addEventListener("keydown",e=>{if(e.key==="ArrowLeft")select(sel-1);if(e.key==="ArrowRight")select(sel+1);});
+  render(); initAnim();
+}
+
+function hero(){
+  const tot=days9.map(d=>total(DATA.home.d[d]));
+  let streak=0; while(streak<tot.length && tot[streak]<1) streak++;
+  // next sun = from now on: today only counts the hours still ahead
+  const ahead=days9.map((d,i)=>i===0?DATA.home.d[d].reduce((a,v,h)=>a+(h>=Math.floor(nowH)?v:0),0):tot[i]);
+  const first=ahead.findIndex(v=>v>=1);
+  const t=document.getElementById("herotitle"), p=document.getElementById("herotext");
+  if(streak>=3){ t.textContent=`No real sun in Winterthur for the next ${streak===tot.length?streak+"+":streak} days`;
+    p.innerHTML= first>=0?`First sunny day forecast: <b>${longDay(days9[first])}</b> (≈ ${ahead[first].toFixed(1)} h).`:"No day with ≥ 1 h sun in the forecast."; }
+  else { document.getElementById("heroicon").textContent=tot[0]>=1?"☀︎":"⛅︎";
+    document.querySelector(".hero").classList.toggle("sunny", tot[0]>=1);
+    t.textContent= tot[0]>=1?`Sun in Winterthur today: ≈ ${tot[0].toFixed(1)} h`:`Little sun today, but no sun drought ahead`;
+    p.innerHTML= first>=0?`Next sun: <b>${first===0?"later today":longDay(days9[first])}</b> (≈ ${ahead[first].toFixed(1)} h).`:""; }
+  document.getElementById("herometa").innerHTML=`<span>Sun next 9 days: <b>${tot.reduce((a,b)=>a+b,0).toFixed(1)} h</b></span><span>Source: MeteoSwiss local forecast, ZIP 8400</span><span>Last day with ≥ 2 h sun: not built yet (needs station history)</span>`;
+  const n=document.getElementById("nexthome");
+  if(first<0){n.textContent="No sun at home in the forecast";return;}
+  // sun spread thinly over many hours (e.g. 0.1 h each) must still give a window: threshold = min(0.15, half the day's peak)
+  const h=DATA.home.d[days9[first]], thr=Math.min(0.15,Math.max(...h)/2), hrs=h.map((v,i)=>v>=thr&&v>0&&(first>0||i>=Math.floor(nowH))?i:-1).filter(i=>i>=0);
+  n.textContent=`Next sun at home: ${longDay(days9[first])}, ~${fmt(hrs[0])}–${fmt(hrs[hrs.length-1]+1)} (≈ ${ahead[first].toFixed(1)} h)`;
+}
+
+function select(i){ if(i<0||i>=days9.length) return; sel=i; render(); }
+function dayStrip(){
+  const el=document.getElementById("days"); el.innerHTML="";
+  days9.forEach((d,i)=>{const v=total(DATA.home.d[d]);
+    el.insertAdjacentHTML("beforeend",`<div class="day${i===0?" today":""}${i===sel?" sel":""}" data-i="${i}"><div class="bar ${v>=1?"sun":""}" style="height:${Math.max(3,Math.min(v,9)/9*100)}%"><span class="v">${v.toFixed(1)}</span></div><div class="lbl">${i===0?"Today":dayName(d)}</div></div>`);});
+  el.querySelectorAll(".day").forEach(x=>x.onclick=()=>select(+x.dataset.i));
+}
+
+function eff(s,d,depH){
+  const arr=depH+s.travel_min/60;
+  const h=s.d[d]||Array(24).fill(0);
+  if(s.closed) return {e:0,arr,h};
+  const end=s.last_down?(+s.last_down.slice(0,2)+s.last_down.slice(3)/60):24;
+  let e=0; h.forEach((f,i)=>{const ov=Math.max(0,Math.min(i+1,end)-Math.max(i,arr)); e+=f*ov;});
+  return {e,arr,h};
+}
+
+function render(){
+  const d=days9[sel];
+  const depH = sel===0 ? Math.max(dep, nowH) : dep;
+  const all=DATA.spots.map(s=>({s,...eff(s,d,depH)})).sort((a,b)=>a.s.travel_min-b.s.travel_min||a.s.changes-b.s.changes);
+  const sunny=all.filter(r=>r.e>=1);
+  const label = sel===0?"today":sel===1?"tomorrow":"on "+longDay(d);
+  const ride = s => s.changes===0?"direct":`${s.changes} change${s.changes>1?"s":""}`;
+  const window_ = r => {const hrs=r.h.map((f,i)=>f>0.15&&i+1>r.arr?i:-1).filter(i=>i>=0); return hrs.length?`${fmt(Math.max(hrs[0],r.arr))}–${fmt(hrs[hrs.length-1]+1)}`:"";};
+  dayStrip(); renderMaps();
+}
+
+const PATH=`M${CH.map(p=>px(p[0]).toFixed(1)+","+py(p[1]).toFixed(1)).join("L")}Z`;
+function renderMaps(){
+  const days=days9.slice(0,5);
+  document.getElementById("maxh").textContent=(MAPS?MAPS.full_yellow_h:9)+" h";
+  const used=[...new Set(days.map(d=>{const m=MAPS&&MAPS.maps.find(x=>x.date===d);return m?`${m.model} ${m.res_km} km`:null}).filter(Boolean))];
+  document.getElementById("mapnote").textContent=`transparent = no sun · full yellow = ${MAPS?MAPS.full_yellow_h:9} h · ${used.join(", ")} · dots: yellow ≥ 1 h, gold ≥ 4 h, ring = nearest sun after arrival`;
+  document.getElementById("maprow").innerHTML=days.map((d,i)=>{
+    const depH=i===0?Math.max(dep,nowH):dep;
+    const rows=DATA.spots.map(s=>({s,...eff(s,d,depH)})).sort((a,b)=>a.s.travel_min-b.s.travel_min||a.s.changes-b.s.changes);
+    const n0=rows.find(r=>r.e>=1), m=MAPS&&MAPS.maps.find(x=>x.date===d), H=DATA.home, hv=total(H.d[d]);
+    let img="";
+    if(m){const [x0,y0,x1,y1]=MAPS.bbox;
+      img=`<image href="data/${m.png}" x="${px(x0)}" y="${py(y1)}" width="${px(x1)-px(x0)}" height="${py(y0)-py(y1)}" preserveAspectRatio="none" clip-path="url(#clip${i})"/>`;}
+    let g=`<defs><clipPath id="clip${i}"><path d="${PATH}"/></clipPath></defs><path d="${PATH}" fill="#dfe3e6"/>${img}<path d="${PATH}" fill="none" stroke="#7d868f" stroke-width="2"/>`;
+    rows.forEach(r=>{const s=r.s,v=total(r.h),fill=v>=4?"#f4b400":v>=1?"#ffd75e":"#fff";
+      if(n0&&n0.s===s) g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="24" fill="none" stroke="#2b3036" stroke-width="4"/>`;
+      g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="13" fill="${fill}" stroke="#2b3036" stroke-width="3"><title>${s.name}: ${v.toFixed(1)} h</title></circle>`;});
+    g+=`<circle cx="${px(H.lon)}" cy="${py(H.lat)}" r="12" fill="#2b3036"><title>Winterthur: ${hv.toFixed(1)} h</title></circle>`;
+    const name=i===0?"Today":i===1?"Tomorrow":dayName(d);
+    const tc=n0?`<span class="s">☀ ${n0.s.name.replace(" Kulm","")}</span> ${dur(n0.s.travel_min)}`:`no sun at the spots`;
+    return `<div class="tile${i===sel?" sel":""}" data-i="${i}"><div class="th"><span><b>${name}</b> ${longDay(d).split(" ").slice(1).join(" ")}</span><span class="q">${m?m.res_km+" km":"no map"}</span></div>
+      <svg viewBox="0 0 600 390" width="100%">${g}</svg>
+      <div class="tc">Winterthur <b>${hv.toFixed(1)} h</b> ${hv>=1?"☀︎":"☁︎"}<br>${tc}</div></div>`;}).join("");
+  document.querySelectorAll(".tile").forEach(t=>t.onclick=()=>select(+t.dataset.i));
+}
+// ---- animated hourly map ----
+// frame end_utc t covers (t-1h, t]; spots/home use the local forecast for the same hour
+function frameInfo(f){
+  const end=new Date(f.end_utc.replace("Z",":00Z")), start=new Date(end-3600e3), l=local(start);
+  const frac=p=>(p.d[l.date]||[])[l.hour]||0;
+  const spots=DATA.spots.map(s=>({s,v:frac(s)}));
+  return {start,end,l,spots,home:frac(DATA.home),nSun:spots.filter(x=>x.v>=0.25).length};
+}
+function initAnim(){
+  if(!FR||!FR.frames.length){document.querySelector(".anim").style.display="none";return;}
+  FR.info=FR.frames.map(frameInfo);
+  FR.frames.forEach(f=>{const im=new Image(); im.src="data/"+f.png;});        // preload
+  const nowF=FR.info.findIndex(x=>x.end>now); fi=nowF>=0?nowF:0;
+  const byDay={}; FR.info.forEach((x,i)=>(byDay[x.l.date] ||= []).push(i));
+  document.getElementById("atl").innerHTML=Object.entries(byDay).map(([d,ix],k)=>
+    `<div class="dg"><div class="dl">${k===0?"Today":k===1?"Tomorrow":dayName(d)}</div><div class="cells">${ix.map(i=>{const x=FR.info[i];
+      const a=x.nSun/DATA.spots.length; return `<div class="c${x.home>=0.25?" home":""}${x.end<=now?" past":""}" data-i="${i}" title="${dayName(d)} ${fmt(x.l.hour)}: ${x.nSun} spots with sun" style="background:${x.nSun?`rgba(244,180,0,${0.25+0.75*a})`:"var(--fog)"}"></div>`}).join("")}</div></div>`).join("");
+  document.querySelectorAll("#atl .c").forEach(c=>c.onclick=()=>{stop();show(+c.dataset.i);});
+  document.getElementById("aprev").onclick=()=>{stop();show(fi-1);};
+  document.getElementById("anext").onclick=()=>{stop();show(fi+1);};
+  document.getElementById("aplay").onclick=()=>timer?stop():play();
+  show(fi);
+}
+function play(){ document.getElementById("aplay").textContent="❚❚";
+  if(fi>=FR.frames.length-1) show(0);
+  timer=setInterval(()=>{ if(fi>=FR.frames.length-1){stop();return;} show(fi+1); },650); }
+function stop(){ clearInterval(timer); timer=null; document.getElementById("aplay").textContent="▶"; }
+function show(i){
+  if(i<0||i>=FR.frames.length) return; fi=i;
+  const f=FR.frames[i], x=FR.info[i], [x0,y0,x1,y1]=FR.bbox;
+  const sunny=x.spots.filter(r=>r.v>=0.25).sort((a,b)=>a.s.travel_min-b.s.travel_min);
+  const dl=x.l.date===nowL.date?"Today":dayName(x.l.date);
+  document.getElementById("anow").innerHTML=`<b>${dl} ${longDay(x.l.date).split(" ").slice(1).join(" ")} · ${fmt(x.l.hour)}–${fmt(x.l.hour+1)}</b> · `+
+    (sunny.length?`sun at ${sunny.map(r=>r.s.name.replace(" Kulm","")).join(", ")}`:"no sun at the spots")+` · Winterthur ${x.home>=0.25?"☀︎":"☁︎"}`;
+  let g=`<defs><clipPath id="aclip"><path d="${PATH}"/></clipPath></defs><path d="${PATH}" fill="#dfe3e6"/>`+
+    `<image href="data/${f.png}" x="${px(x0)}" y="${py(y1)}" width="${px(x1)-px(x0)}" height="${py(y0)-py(y1)}" preserveAspectRatio="none" clip-path="url(#aclip)"/>`+
+    `<path d="${PATH}" fill="none" stroke="#7d868f" stroke-width="1.2"/>`;
+  x.spots.forEach(r=>{const s=r.s, on=r.v>=0.25, dy=s.name==="Bad Ragaz"?-6:s.name==="Chur"?13:5;
+    g+=`<circle cx="${px(s.lon)}" cy="${py(s.lat)}" r="6" fill="${on?"#f4b400":"#fff"}" stroke="#2b3036" stroke-width="1.4"/>
+      <text x="${px(s.lon)+10}" y="${py(s.lat)+dy}" font-size="12" ${on?'font-weight="700"':''} fill="#2b3036" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".8">${s.name.replace(" Kulm","")}</text>`;});
+  const H=DATA.home;
+  g+=`<circle cx="${px(H.lon)}" cy="${py(H.lat)}" r="6" fill="#2b3036"/><text x="${px(H.lon)+9}" y="${py(H.lat)-7}" font-size="12" font-weight="600" fill="#2b3036" paint-order="stroke" stroke="#fff" stroke-width="3" stroke-opacity=".7">Winterthur ${x.home>=0.25?"☀︎":"☁︎"}</text>`+
+     `<text x="590" y="380" font-size="10" text-anchor="end" fill="#5c656e">${f.model} ${f.res_km} km · run ${f.run_utc}</text>`;
+  document.getElementById("amap").innerHTML=g;
+  document.querySelectorAll("#atl .c").forEach(c=>c.classList.toggle("on",+c.dataset.i===i));
+}
+main();
+</script>
+</body>
+</html>
